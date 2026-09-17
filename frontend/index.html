@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loyalty Credits Lab - Sign in</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">Loyalty Credits Lab</div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <h1>Sign in</h1>
+      <p class="sub">Two fixed accounts are provisioned for this vulnerability lab.</p>
+
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" value="sender@lab.local">
+
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" value="Sender#2026">
+
+      <button id="loginBtn">Sign in</button>
+      <div class="error" id="err"></div>
+
+      <div class="creds">
+        <strong>Sender (attacker):</strong> sender@lab.local / Sender#2026 &mdash; 5 credits<br>
+        <strong>Receiver (victim):</strong> receiver@lab.local / Receiver#2026 &mdash; 5 credits
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+  <script>
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const err = document.getElementById('err');
+      err.textContent = '';
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const { ok, data } = await api('/auth/session', { method: 'POST', body: { email, password } });
+      if (!ok) { err.textContent = 'Invalid credentials.'; return; }
+      saveSession(data);
+      location.href = '/wallet.html';
+    });
+  </script>
+</body>
+</html>

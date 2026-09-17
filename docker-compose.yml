@@ -1,0 +1,12 @@
+services:
+  loyalty-lab:
+    build: .
+    image: loyalty-credits-lab
+    container_name: loyalty-credits-lab
+    ports:
+      - "8080:80"
+    volumes:
+      - lab-data:/data
+
+volumes:
+  lab-data:

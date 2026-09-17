@@ -1,0 +1,2 @@
+# Normalize line endings to LF so shell scripts run inside the Linux container.
+* text=auto eol=lf

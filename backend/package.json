@@ -1,0 +1,13 @@
+{
+  "name": "loyalty-credits-lab-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Loyalty credits lab (credit transfer) - Node built-ins only, no dependencies",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --experimental-sqlite server.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loyalty Credits Lab - Inbox</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">Loyalty Credits Lab</div>
+    <nav>
+      <a href="/wallet.html">Wallet</a>
+      <a href="/inbox.html">Inbox</a>
+      <a href="#" onclick="logout();return false;">Sign out</a>
+    </nav>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <h1>Inbox</h1>
+      <p class="sub" id="owner">Confirmation messages for your transfers. Open a link to finalize that transfer.</p>
+      <button class="ghost" id="refreshBtn">Refresh</button>
+      <div id="messages" style="margin-top:16px"></div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+  <script>
+    requireAuth();
+
+    async function load() {
+      const { ok, data } = await api('/inbox');
+      const box = document.getElementById('messages');
+      if (!ok) { box.textContent = 'Could not load inbox.'; return; }
+      document.getElementById('owner').textContent = 'Inbox of ' + data.inbox_owner;
+      if (!data.messages.length) { box.innerHTML = '<p class="note">No messages yet.</p>'; return; }
+      box.innerHTML = '';
+      for (const m of data.messages) {
+        const msg = document.createElement('div');
+        msg.className = 'msg';
+
+        const from = document.createElement('div');
+        from.className = 'from';
+        from.textContent = 'Loyalty Program <no-reply@lab.local>';
+        msg.appendChild(from);
+
+        const subject = document.createElement('div');
+        subject.className = 'subject';
+        subject.textContent = m.subject;
+        msg.appendChild(subject);
+
+        const tag = document.createElement('span');
+        tag.className = 'tag ' + (['pending','confirmed','expired'].includes(m.state) ? m.state : '');
+        tag.textContent = m.state;
+        msg.appendChild(tag);
+
+        const note = document.createElement('span');
+        note.className = 'note';
+        note.textContent = ' · ' + m.credits + ' credits to ' + m.recipient_email;
+        msg.appendChild(note);
+
+        if (m.state === 'pending') {
+          const linkWrap = document.createElement('div');
+          const link = document.createElement('a');
+          link.className = 'confirm';
+          link.href = m.confirm_url;
+          link.target = '_blank';
+          link.textContent = 'Confirm this transfer →';
+          linkWrap.appendChild(link);
+          msg.appendChild(linkWrap);
+        }
+
+        box.appendChild(msg);
+      }
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', load);
+    load();
+  </script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loyalty Credits Lab - Wallet</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">Loyalty Credits Lab</div>
+    <nav>
+      <a href="/wallet.html">Wallet</a>
+      <a href="/inbox.html">Inbox</a>
+      <a href="#" onclick="logout();return false;">Sign out</a>
+    </nav>
+  </div>
+
+  <div class="wrap">
+    <div class="grid">
+      <div class="card">
+        <h2>Your balance</h2>
+        <div class="balance" id="balance">&mdash;</div>
+        <div class="note" id="whoami"></div>
+      </div>
+      <div class="card">
+        <h2>Lab state (both wallets)</h2>
+        <div id="labState"></div>
+        <button class="ghost" id="resetBtn">Reset lab</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Transfer credits</h2>
+      <p class="sub">Start a credit transfer to another member. A confirmation message lands in your inbox; the transfer completes only when you open its confirmation link.</p>
+
+      <label for="recipient">Recipient email</label>
+      <input id="recipient" type="email" value="receiver@lab.local">
+
+      <label for="credits">Credits</label>
+      <input id="credits" type="number" min="1" value="5">
+
+      <button id="sendBtn">Send transfer request</button>
+      <div class="error" id="err"></div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+  <script>
+    requireAuth();
+
+    async function refresh() {
+      const me = await api('/wallet/me');
+      if (me.ok) {
+        document.getElementById('balance').textContent = me.data.credit_balance;
+        document.getElementById('whoami').textContent =
+          `${me.data.full_name} · ${me.data.email} · ${me.data.wallet_id}`;
+      }
+      const st = await api('/lab/state');
+      if (st.ok) {
+        const container = document.getElementById('labState');
+        container.innerHTML = '';
+        for (const a of st.data.accounts) {
+          const row = document.createElement('div');
+          row.className = 'state-row';
+          const span = document.createElement('span');
+          span.textContent = a.email;
+          const strong = document.createElement('strong');
+          strong.textContent = a.balance;
+          row.appendChild(span);
+          row.appendChild(strong);
+          container.appendChild(row);
+        }
+        const summaryRow = document.createElement('div');
+        summaryRow.className = 'state-row';
+        const label = document.createElement('span');
+        label.textContent = 'Pending / confirmed transfers';
+        const value = document.createElement('strong');
+        value.textContent = st.data.pending_transfers + ' / ' + st.data.confirmed_transfers;
+        summaryRow.appendChild(label);
+        summaryRow.appendChild(value);
+        container.appendChild(summaryRow);
+      }
+    }
+
+    document.getElementById('sendBtn').addEventListener('click', async () => {
+      const err = document.getElementById('err');
+      err.textContent = '';
+      const recipient_email = document.getElementById('recipient').value.trim();
+      const credits = parseInt(document.getElementById('credits').value, 10);
+      const { ok, data } = await api('/wallet/transfer-credits', {
+        method: 'POST',
+        extraHeaders: { 'X-Client-Key': clientKey() },
+        body: {
+          recipient_wallet_id: '',
+          recipient_email,
+          locale: 'en',
+          recipient_card_ref: '',
+          credits,
+        },
+      });
+      if (!ok) { err.textContent = 'Error: ' + (data && data.error ? data.error : 'request failed'); return; }
+      err.style.color = '#1a7f37';
+      err.textContent = data.message + ' Open the Inbox tab to confirm.';
+      refresh();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', async () => {
+      await api('/lab/reset', { method: 'POST' });
+      refresh();
+    });
+
+    refresh();
+  </script>
+</body>
+</html>
